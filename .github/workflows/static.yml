@@ -20,7 +20,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22 # 升級到較新的版本
           cache: 'npm'
 
       - name: Install dependencies
@@ -29,13 +29,9 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Vite 預設打包後的資料夾是 dist
           path: './dist'
 
       - name: Deploy to GitHub Pages
