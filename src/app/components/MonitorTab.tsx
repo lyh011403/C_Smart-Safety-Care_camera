@@ -444,7 +444,8 @@ export function MonitorTab({
     <div
       className="flex flex-col gap-5 p-4 pb-32 overflow-y-auto h-full"
       style={{
-        background: "transparent"
+        background: "transparent",
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)"
       }}
     >
 

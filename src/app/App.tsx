@@ -276,11 +276,9 @@ function AppContent() {
         `}</style>
         {/* Tab Content with Conditional Rendering for Performance */}
         <div
-          className="flex-1 relative"
+          className="flex-1 relative min-h-0 overflow-hidden"
           style={{
-            paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
-            zIndex: 10 // 高於背景但低於導航
+            zIndex: 20
           }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -360,20 +358,15 @@ function AppContent() {
 
         {/* Bottom Navigation */}
         <div
-          className="flex-shrink-0 px-4 pb-2 relative"
+          className="flex-shrink-0 px-4 relative border-t border-white/50"
           style={{
-            background: "#F0F4F8",
-            zIndex: 50,
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)"
+            background: "rgba(240, 244, 248, 0.8)",
+            backdropFilter: "blur(20px)",
+            zIndex: 100,
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)",
+            paddingTop: "12px"
           }}
         >
-          <div
-            style={{
-              height: 1,
-              marginBottom: 10,
-              background: "linear-gradient(90deg,transparent,#d1d9e688,transparent)",
-            }}
-          />
           <div
             className="flex rounded-2xl p-1"
             style={{
