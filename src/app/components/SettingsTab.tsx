@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { Settings, Video, Mic, Volume2, Database, Bell, LayoutPanelLeft, ShieldAlert, Info, Clock } from "lucide-react";
+import { Settings, Video, Mic, Volume2, Database, Bell, LayoutPanelLeft, ShieldAlert, Info, Clock, ShieldCheck, Smartphone, Lock } from "lucide-react";
 import { SettingsTabProps } from "../types";
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({
@@ -56,6 +56,90 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <span className="text-[10px] font-bold text-gray-500 font-mono">v1.2.8</span>
                 </div>
             </div>
+
+            {/* System Permissions Section */}
+            <motion.section
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={sectionStyle}
+            >
+                <div className="flex items-center gap-2 mb-5">
+                    <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+                        <Lock size={16} className="text-orange-500" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest">系統權限管理</h3>
+                </div>
+
+                <div className="space-y-4">
+                    <p className="text-[10px] text-gray-400 font-bold px-1 leading-relaxed">
+                        ⚠️ 手機使用 PWA 模式時，必須手動授權以下權限。若您曾點選「拒絕」，請至瀏覽器設置中手動清除權限設定並重新開啟。
+                    </p>
+
+                    {[
+                        { id: 'camera', label: '行動相機傳感器', icon: <Video size={16} />, desc: 'AI 辨識必須' },
+                        { id: 'microphone', label: '現場通訊麥克風', icon: <Mic size={16} />, desc: '語音對講必須' },
+                        { id: 'notifications', label: '全域推送通知', icon: <Bell size={16} />, desc: '危險警報必須' }
+                    ].map((perm) => (
+                        <div key={perm.id} className="group flex items-center justify-between p-3.5 rounded-2xl bg-white/40 border border-white/60 hover:bg-white/60 transition-all">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100/50 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                                    {perm.icon}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-800">{perm.label}</span>
+                                    <span className="text-[9px] text-gray-400 font-bold">{perm.desc}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (perm.id === 'notifications') {
+                                        if ('Notification' in window) {
+                                            const status = await Notification.requestPermission();
+                                            if (status === 'granted') {
+                                                new Notification("✅ 通知權限已開啟", { body: "當系統偵測到高風險時，將會發送警報。" });
+                                            } else {
+                                                alert(`通知權限當前狀態: ${status}\n若要開啟，請點選瀏覽器網址列旁的「鎖頭」圖示進行設置。`);
+                                            }
+                                        } else {
+                                            alert("此瀏覽器不支持 Web Notification");
+                                        }
+                                    } else {
+                                        try {
+                                            const stream = await navigator.mediaDevices.getUserMedia({
+                                                video: perm.id === 'camera' ? { facingMode: 'environment' } : false,
+                                                audio: perm.id === 'microphone'
+                                            });
+                                            stream.getTracks().forEach(track => track.stop());
+                                            alert(`${perm.label} 權限授權成功！`);
+                                        } catch (e: any) {
+                                            alert(`授權失敗: ${e.message}\n請確保您的連線為 HTTPS。`);
+                                        }
+                                    }
+                                }}
+                                className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[10px] font-black shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                            >
+                                立即請求
+                            </button>
+                        </div>
+                    ))}
+
+                    <button
+                        onClick={() => {
+                            if (Notification.permission === 'granted') {
+                                new Notification("🔔 系統測試通知", {
+                                    body: "這是一則測試通知，代表您的裝置已正確接收到警報訊號。",
+                                    icon: "/favicon.ico"
+                                });
+                            } else {
+                                alert("尚未取得通知權限，測試失敗。");
+                            }
+                        }}
+                        className="w-full py-3 rounded-2xl border border-blue-200 bg-blue-50/30 text-blue-600 text-[11px] font-bold active:scale-[0.98] transition-all"
+                    >
+                        🧪 點我測試跳出全域通知
+                    </button>
+                </div>
+            </motion.section>
 
             {/* Network Section */}
             <motion.section

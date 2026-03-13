@@ -330,14 +330,32 @@ export function MonitorTab({
     if (riskScore >= 90) {
       if (!hasDismissedAlert) {
         setShowAlert(true);
+
+        // --- 系統級推送通知 (PWA 核心功能) ---
+        if ("Notification" in window && Notification.permission === "granted") {
+          try {
+            const n = new Notification("⚠️ 高風險安全警報", {
+              body: "偵測到疑似危險物品或行為，請立即確認監視畫面！",
+              tag: "risk-alert", // 避免重複跳出
+              renotify: true,
+              silent: false
+            } as any);
+            n.onclick = () => {
+              window.focus();
+              setShowAlert(false);
+            };
+          } catch (e) {
+            console.error("Notification Error:", e);
+          }
+        }
+
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           // 強烈的警告震動節奏：震動 400ms，暫停 200ms，再震動 400ms
           navigator.vibrate([400, 200, 400]);
         }
       }
     } else {
-      // The user requested that the notification must be manually closed to disappear.
-      // We do not set setShowAlert(false) here automatically.
+      // 當風險降低，重置已關閉狀態，以便下次風險升高時能再次觸發
       setHasDismissedAlert(false);
     }
   }, [riskScore, hasDismissedAlert]);
