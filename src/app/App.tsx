@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { MonitorTab } from "./components/MonitorTab";
 import { motion, AnimatePresence } from "motion/react";
 import { HealthTab } from "./components/HealthTab";
-import { CareTab, Task, INITIAL_TASKS, INITIAL_JOURNAL_ENTRIES, JournalEntry } from "./components/CareTab";
+import { Tab, Task, JournalEntry } from "./types";
+import { CareTab, INITIAL_TASKS, INITIAL_JOURNAL_ENTRIES } from "./components/CareTab";
 import { Mic, MicOff, Sparkles, Settings } from "lucide-react";
 import { SettingsTab } from "./components/SettingsTab";
-
-type Tab = "monitor" | "health" | "care" | "settings";
 
 const NAV_ITEMS: { id: Tab; label: string; emoji: string }[] = [
   { id: "monitor", label: "監控", emoji: "🔍" },
