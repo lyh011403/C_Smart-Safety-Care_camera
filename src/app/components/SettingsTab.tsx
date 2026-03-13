@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { Settings, Video, Mic, Volume2, Database, Bell, LayoutPanelLeft, ShieldAlert } from "lucide-react";
+import { Settings, Video, Mic, Volume2, Database, Bell, LayoutPanelLeft, ShieldAlert, Info, Clock } from "lucide-react";
 import { SettingsTabProps } from "../types";
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({
@@ -290,11 +290,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
             </motion.section>
 
-            <div className="flex flex-col items-center pt-4 pb-12 opacity-40 grayscale">
-                <LayoutPanelLeft size={32} className="text-blue-500 mb-2" />
-                <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Smart Safety Care System</p>
-                <div className="h-[1px] w-12 bg-gray-300 my-2" />
-                <p className="text-[8px] text-gray-400 font-bold uppercase">Advanced AI Home Integration</p>
+            {/* Technical Notes Section */}
+            <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                style={sectionStyle}
+            >
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <Info size={16} className="text-blue-500" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest">系統開發說明</h3>
+                </div>
+
+                <div className="space-y-3">
+                    {[
+                        { title: "加密連線 (HTTPS)", desc: "GitHub Pages 自動提供 HTTPS，確保鏡頭 API 正常運作。", icon: "🛡️" },
+                        { title: "鏡頭 API 授權", desc: "主鏡頭需在 HTTPS 下指定 'environment'，自拍鏡頭則用 'user'。", icon: "📷" },
+                        { title: "推論效能", desc: "手機推論約 100-500ms，建議降低解析度以獲得流暢體驗。", icon: "⚡" },
+                        { title: "隱私保護", desc: "影像採純前端推論，原始畫面不送往伺服器，安全無虞。", icon: "🔒" }
+                    ].map((note, idx) => (
+                        <div key={idx} className="p-3 rounded-2xl bg-white/40 border border-white/60 flex items-start gap-3">
+                            <span className="text-lg">{note.icon}</span>
+                            <div>
+                                <p className="text-xs font-black text-gray-800">{note.title}</p>
+                                <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed font-bold">{note.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </motion.section>
+
+            <div className="flex flex-col items-center pt-8 pb-12 opacity-40 grayscale">
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Smart Safety Care System</p>
+                <div className="h-[1px] w-8 bg-gray-300 my-1" />
+                <p className="text-[8px] text-gray-400 font-bold uppercase">v1.2.5 Premium Edition</p>
             </div>
         </div>
     );

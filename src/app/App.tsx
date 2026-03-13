@@ -228,7 +228,7 @@ function AppContent() {
         className="relative flex flex-col overflow-hidden"
         style={{
           width: isMobile ? "100%" : 375,
-          height: isMobile ? "100vh" : 812,
+          height: isMobile ? "100dvh" : 812,
           borderRadius: isMobile ? 0 : 40,
           background: "rgba(240, 244, 248, 0.7)",
           backdropFilter: isMobile ? "none" : "blur(20px)",
@@ -279,6 +279,7 @@ function AppContent() {
           className="flex-1 relative"
           style={{
             paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
             zIndex: 10 // 高於背景但低於導航
           }}
           onTouchStart={onTouchStart}
@@ -292,8 +293,7 @@ function AppContent() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
-              className="w-full h-full overflow-y-auto"
-              style={{ scrollbarWidth: "none" }}
+              className="w-full h-full overflow-hidden"
             >
               {activeTab === "monitor" && (
                 <MonitorTab
@@ -360,8 +360,12 @@ function AppContent() {
 
         {/* Bottom Navigation */}
         <div
-          className="flex-shrink-0 px-4 pb-5 pt-3 relative"
-          style={{ background: "#F0F4F8", zIndex: 50 }}
+          className="flex-shrink-0 px-4 pb-2 relative"
+          style={{
+            background: "#F0F4F8",
+            zIndex: 50,
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)"
+          }}
         >
           <div
             style={{
@@ -436,13 +440,6 @@ function AppContent() {
             })}
           </div>
 
-          {/* Home Indicator */}
-          <div className="flex justify-center mt-3">
-            <div
-              className="rounded-full"
-              style={{ width: 120, height: 4, background: "#c8d0dc" }}
-            />
-          </div>
         </div>
 
         {/* Global Floating Voice Assistant Orb */}
