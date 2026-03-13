@@ -41,7 +41,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     };
 
     return (
-        <div className="p-4 pb-32 space-y-6 overflow-y-auto max-h-[calc(100vh-80px)]">
+        <div className="p-4 pb-32 space-y-6 overflow-y-auto h-full">
             <div className="flex items-center justify-between px-2 mb-2">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-white/50">

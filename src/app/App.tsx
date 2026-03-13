@@ -276,10 +276,10 @@ function AppContent() {
         `}</style>
         {/* Tab Content with Conditional Rendering for Performance */}
         <div
-          className="flex-1 relative" // 移除 overflow-hidden 避免 Modal 被切掉
+          className="flex-1 relative"
           style={{
-            zIndex: 100, // 極高層級確保覆蓋一切
-            paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)"
+            paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
+            zIndex: 10 // 高於背景但低於導航
           }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -361,7 +361,7 @@ function AppContent() {
         {/* Bottom Navigation */}
         <div
           className="flex-shrink-0 px-4 pb-5 pt-3 relative"
-          style={{ background: "#F0F4F8", zIndex: 1 }} // 降低層級
+          style={{ background: "#F0F4F8", zIndex: 50 }}
         >
           <div
             style={{
