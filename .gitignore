@@ -32,3 +32,6 @@ ENV
 __pycache__/
 *.py[cod]
 *$py.class
+# Secrets
+video/credentials.json
+video/token.json
