@@ -143,6 +143,7 @@ export function MonitorTab({
   onTabChange?: (tab: "monitor" | "health" | "care") => void
 }) {
   const [pulse, setPulse] = useState(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
   const [backendUrl, setBackendUrl] = useState(() => {
     const saved = localStorage.getItem('smart_care_backend_url') || 'http://127.0.0.1:8080';
     return saved.endsWith('/') ? saved.slice(0, -1) : saved;
@@ -228,7 +229,7 @@ export function MonitorTab({
   const startLocalCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" }, // 可以改成 environment 以使用後鏡頭
+        video: { facingMode: cameraFacingMode },
         audio: false
       });
       setLocalStream(stream);
@@ -243,6 +244,17 @@ export function MonitorTab({
       setUseLocalCamera(false);
     }
   };
+
+  const toggleFacingMode = () => {
+    setCameraFacingMode(prev => prev === "user" ? "environment" : "user");
+  };
+
+  useEffect(() => {
+    if (useLocalCamera && isActive) {
+      stopLocalCamera(); // 重啟以更換鏡頭
+      startLocalCamera();
+    }
+  }, [cameraFacingMode]);
 
   const stopLocalCamera = () => {
     if (localStream) {
@@ -437,8 +449,8 @@ export function MonitorTab({
     }
   };
 
-  // 改用後端輪詢結果作為連線指標，因為 MJPEG 串流在手機瀏覽器上常不觸發 onLoad
-  const effectiveLive = cameraConnected;
+  // 改用後端輪詢結果作為連線指標，或是本地鏡頭已啟動
+  const effectiveLive = cameraConnected || useLocalCamera;
 
   useEffect(() => {
     const id = setInterval(() => setPulse((p: boolean) => !p), 2000);
@@ -549,16 +561,16 @@ export function MonitorTab({
             <Wifi size={14} className={effectiveLive ? "text-blue-500" : "text-red-500"} />
             <div className="flex flex-col items-start leading-none">
               <span className={`text-[10px] ${effectiveLive ? 'text-gray-600' : 'text-red-600'}`} style={{ fontWeight: 700 }}>
-                {effectiveLive ? 'LIVE' : 'OFF'}
+                {useLocalCamera ? 'MOBILE' : (effectiveLive ? 'LIVE' : 'OFF')}
               </span>
               {!effectiveLive && (
                 <span className="text-[8px] text-red-500 font-bold mt-0.5">點擊授權</span>
               )}
             </div>
             <div
-              className={`w-2.5 h-2.5 rounded-full ${effectiveLive ? 'bg-green-500' : 'bg-red-500'}`}
+              className={`w-2.5 h-2.5 rounded-full ${effectiveLive ? (useLocalCamera ? 'bg-blue-400' : 'bg-green-500') : 'bg-red-500'}`}
               style={{
-                boxShadow: effectiveLive ? "0 0 8px #22c55e" : "none",
+                boxShadow: effectiveLive ? (useLocalCamera ? "0 0 8px #60a5fa" : "0 0 8px #22c55e") : "none",
                 animation: (effectiveLive && pulse) ? "heartbeat 2s infinite" : "none"
               }}
             />
@@ -656,9 +668,48 @@ export function MonitorTab({
                     )
                   )}
                   {!useLocalCamera && !liveChannels[chId] && (
-                    <div className="absolute inset-0 bg-[#111827] flex flex-col items-center justify-center gap-2">
-                      <Wifi size={viewMode === "1CH" ? 32 : 20} className="text-gray-600 opacity-40" />
-                      <span className="text-[10px] font-bold text-gray-700 tracking-widest opacity-40">NO SIGNAL</span>
+                    <div className="absolute inset-0 bg-[#111827] flex flex-col items-center justify-center gap-4">
+                      <div className="flex flex-col items-center gap-2 opacity-40">
+                        <Wifi size={viewMode === "1CH" ? 32 : 20} className="text-gray-600" />
+                        <span className="text-[10px] font-bold text-gray-700 tracking-widest">NO SIGNAL</span>
+                      </div>
+
+                      {chId === activeChannel && viewMode === "1CH" && (
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUseLocalCamera(true);
+                            localStorage.setItem("use_local_camera", "true");
+                          }}
+                          className="px-4 py-2 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 text-[11px] font-bold backdrop-blur-sm active:bg-blue-500/40 transition-all"
+                        >
+                          使用手機鏡頭
+                        </motion.button>
+                      )}
+                    </div>
+                  )}
+                  {useLocalCamera && chId === activeChannel && (
+                    <div className="absolute top-2 right-2 z-40 flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFacingMode();
+                        }}
+                        className="p-2 rounded-lg bg-black/40 text-white backdrop-blur-md border border-white/10 active:scale-90 transition-all"
+                      >
+                        <RefreshCw size={14} className={cameraFacingMode === 'environment' ? 'rotate-180' : ''} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUseLocalCamera(false);
+                          localStorage.setItem("use_local_camera", "false");
+                        }}
+                        className="p-2 rounded-lg bg-red-500/40 text-white backdrop-blur-md border border-white/10 active:scale-90 transition-all"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   )}
                   {useLocalCamera && chId === activeChannel && !localProcessedImage && (
