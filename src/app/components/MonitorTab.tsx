@@ -57,17 +57,17 @@ function RiskRing({ score, isMobile = false }: { score: number; isMobile?: boole
         </>
       )}
 
-      {/* Outer neumorphic ring (Base Plate) */}
       <div
         className={`absolute inset-0 rounded-full transition-all duration-700`}
         style={{
-          background: "#F0F4F8",
+          background: "rgba(255, 255, 255, 0.45)",
+          backdropFilter: "blur(10px)",
           boxShadow: `
-            8px 8px 16px #d1d9e6, 
-            -8px -8px 16px #ffffff,
-            inset 0 0 15px ${score >= 70 ? "rgba(239, 68, 68, 0.15)" : score > 30 ? "rgba(59, 130, 246, 0.15)" : "rgba(16, 185, 129, 0.15)"},
-            0 0 25px ${score >= 70 ? "rgba(239, 68, 68, 0.25)" : score > 30 ? "rgba(59, 130, 246, 0.15)" : "rgba(16, 185, 129, 0.1)"}
+            4px 4px 10px rgba(0, 0, 0, 0.03), 
+            inset 2px 2px 5px rgba(255, 255, 255, 0.8),
+            inset -2px -2px 5px rgba(0, 0, 0, 0.02)
           `,
+          border: "1px solid rgba(255, 255, 255, 0.5)"
         }}
       />
       <svg width="148" height="148" className="absolute" style={{ transform: "rotate(-90deg)" }}>
@@ -318,8 +318,9 @@ export function MonitorTab({
   };
 
   // Find next incomplete task
-  const nextTask = tasks.find(t => !t.done) || tasks[tasks.length - 1];
+  const nextTask = tasks.find(t => !t.done);
   const nextTaskMeta = nextTask ? CATEGORY_META[nextTask.category] : null;
+  const completedCount = tasks.filter(t => t.done).length;
 
   // 移除原始模擬動態計分邏輯，改用上方 checkStatusAndRisk 輪詢後端數據
 
@@ -884,57 +885,115 @@ export function MonitorTab({
         </div>
       </motion.div >
 
-      {/* Quick Status Row */}
-      <div className="grid grid-cols-2 gap-3 mt-4">
+      {/* Health Vitals Summary Row */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Heart Rate Card */}
         <motion.div
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          onClick={handleCompleteTask}
-          className="col-span-2 flex flex-col items-center justify-center py-4 rounded-2xl gap-1.5 glass-panel cursor-pointer"
-          style={{
-            background: nextTask && !nextTask.done ? "rgba(255, 255, 255, 0.45)" : "rgba(255, 255, 255, 0.25)",
-            border: nextTask && !nextTask.done ? "1.5px solid rgba(59, 130, 246, 0.3)" : "1.5px solid rgba(255, 255, 255, 0.5)",
-          }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="rounded-2xl p-4 glass-panel flex flex-col items-center justify-center border border-white"
+          style={{ background: "rgba(255, 255, 255, 0.5)" }}
         >
-          {nextTask && !nextTask.done ? (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl drop-shadow-sm">
-                  {nextTaskMeta?.emoji || "📋"}
-                </span>
-                <span className="text-gray-700 font-bold" style={{ fontSize: 15 }}>
-                  {nextTask.title}
-                </span>
-              </div>
-              <span className="text-gray-500 text-center" style={{ fontSize: 11, fontWeight: 600 }}>
-                {nextTask.time} · {nextTask.category === 'Medication' ? '服藥' : nextTask.category === 'Nutrition' ? '飲食' : '活動'} · 點擊完成
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-2xl animate-bounce">
-                🎉
-              </span>
-              <span className="text-gray-800 font-extrabold" style={{ fontSize: 15 }}>今日進度已完成</span>
-              <span className="text-gray-500 text-center" style={{ fontSize: 11, fontWeight: 600 }}>已完成所有照護任務</span>
-            </>
-          )}
-        </motion.div>
-
-        {/* Playback & Timeline Button */}
-        <motion.div
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="flex flex-col items-center justify-center p-3.5 rounded-2xl gap-2 glass-panel cursor-pointer"
-          onClick={() => setShowPlayback(true)}
-        >
-          <div className="flex items-center gap-2">
-            <History size={18} className="text-blue-500" />
-            <span className="text-gray-700" style={{ fontSize: 14, fontWeight: 700 }}>回放搜尋</span>
+          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center mb-2 shadow-sm">
+            <div className="animate-pulse">
+              <span className="text-lg">❤️</span>
+            </div>
+          </div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Heart Rate</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-gray-800 tabular-nums">78</span>
+            <span className="text-[10px] font-bold text-gray-500">BPM</span>
           </div>
         </motion.div>
 
+        {/* SpO2 Card */}
+        <motion.div
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="rounded-2xl p-4 glass-panel flex flex-col items-center justify-center border border-white"
+          style={{ background: "rgba(255, 255, 255, 0.5)" }}
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-2 shadow-sm">
+            <span className="text-lg">🩸</span>
+          </div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">SpO2 Oxygen</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-gray-800 tabular-nums">98</span>
+            <span className="text-[10px] font-bold text-gray-500">%</span>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Daily Care Progress Island */}
+      <motion.div
+        whileTap={{ scale: 0.98 }}
+        onClick={handleCompleteTask}
+        className="rounded-3xl p-5 relative overflow-hidden cursor-pointer shadow-xl shadow-blue-500/10 border border-white"
+        style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4))",
+          backdropFilter: "blur(20px)"
+        }}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <Sparkles size={18} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-gray-800">今日照護任務</h4>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{currentDate}</p>
+              </div>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-blue-50 border border-blue-100">
+              <span className="text-[10px] font-black text-blue-500">{completedCount}/{tasks.length}</span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {nextTask ? (
+              <div className="bg-white/40 p-3 rounded-2xl border border-white/50">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl bg-white shadow-sm text-blue-500`}>
+                    <span className="text-xl">{CATEGORY_META[nextTask.category].emoji}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-gray-700">{nextTask.title}</p>
+                    <p className="text-[10px] text-gray-400 font-medium">下一步：點擊標記為完成</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-green-50/50 p-3 rounded-2xl border border-green-100/50 flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">
+                  <X size={12} strokeWidth={4} />
+                </div>
+                <p className="text-xs font-bold text-green-600">所有任務皆已完成！期待明天。</p>
+              </div>
+            )}
+
+            <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <motion.div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600"
+                initial={{ width: 0 }}
+                animate={{ width: `${tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* History Search Section */}
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setShowPlayback(true)}
+        className="rounded-2xl p-4 flex items-center justify-center gap-3 glass-panel border border-white"
+        style={{ background: "rgba(255, 255, 255, 0.4)" }}
+      >
+        <History size={18} className="text-blue-500" />
+        <span className="text-sm font-bold text-gray-700">搜尋歷史回放紀錄</span>
+      </motion.button>
 
 
 

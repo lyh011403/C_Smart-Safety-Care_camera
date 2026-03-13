@@ -818,10 +818,11 @@ export function HealthTab({ isActive = true, isMobile = false }: { isActive?: bo
       {/* Vital Signs 2x2 Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div
-          className="relative overflow-hidden rounded-2xl"
+          className="relative overflow-hidden rounded-2xl glass-panel border border-white"
           style={{
+            background: "rgba(255, 255, 255, 0.45)",
             transition: "all 0.3s",
-            boxShadow: "6px 6px 14px #d1d9e6, -6px -6px 14px #ffffff",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.03)",
           }}
         >
           <VitalCard
@@ -857,42 +858,48 @@ export function HealthTab({ isActive = true, isMobile = false }: { isActive?: bo
           const isTempHigh = vitals.temp >= 37.0;
           return (
             <>
-              <VitalCard
-                type="bp"
-                icon="🩸"
-                label="血壓 BLOOD PRESSURE"
-                value={`${vitals.bp.sys}/${vitals.bp.dia}`}
-                unit="mmHg"
-                status={isBpHigh ? "偏高" : "優良"}
-                statusColor={isBpHigh ? "#f97316" : "#00c48c"}
-                gradFrom={isBpHigh ? "#f97316" : "#00c48c"}
-                gradTo={isBpHigh ? "#fb923c" : "#00e5b0"}
-                bgGlow={isBpHigh ? "rgba(249,115,22,0.4)" : "rgba(0,196,140,0.4)"}
-              />
-              <VitalCard
-                type="spo2"
-                icon="💧"
-                label="血氧 SpO₂"
-                value={vitals.spo2.toFixed(1)}
-                unit="%"
-                status="優良"
-                statusColor="#a78bfa"
-                gradFrom="#a78bfa"
-                gradTo="#c4b5fd"
-                bgGlow="rgba(167,139,250,0.4)"
-              />
-              <VitalCard
-                type="temp"
-                icon="🌡️"
-                label="體溫 TEMPERATURE"
-                value={vitals.temp.toFixed(1)}
-                unit="°C"
-                status={isTempHigh ? "微燒" : "正常"}
-                statusColor={isTempHigh ? "#ef4444" : "#f9a825"}
-                gradFrom={isTempHigh ? "#ef4444" : "#f9a825"}
-                gradTo={isTempHigh ? "#fca5a5" : "#ffcc02"}
-                bgGlow={isTempHigh ? "rgba(239,68,68,0.4)" : "rgba(249,168,37,0.4)"}
-              />
+              <div className="rounded-2xl glass-panel border border-white" style={{ background: "rgba(255, 255, 255, 0.45)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)" }}>
+                <VitalCard
+                  type="bp"
+                  icon="🩸"
+                  label="血壓 BLOOD PRESSURE"
+                  value={`${vitals.bp.sys}/${vitals.bp.dia}`}
+                  unit="mmHg"
+                  status={isBpHigh ? "偏高" : "優良"}
+                  statusColor={isBpHigh ? "#f97316" : "#00c48c"}
+                  gradFrom={isBpHigh ? "#f97316" : "#00c48c"}
+                  gradTo={isBpHigh ? "#fb923c" : "#00e5b0"}
+                  bgGlow={isBpHigh ? "rgba(249,115,22,0.4)" : "rgba(0,196,140,0.4)"}
+                />
+              </div>
+              <div className="rounded-2xl glass-panel border border-white" style={{ background: "rgba(255, 255, 255, 0.45)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)" }}>
+                <VitalCard
+                  type="spo2"
+                  icon="💧"
+                  label="血氧 SpO₂"
+                  value={vitals.spo2.toFixed(1)}
+                  unit="%"
+                  status="優良"
+                  statusColor="#a78bfa"
+                  gradFrom="#a78bfa"
+                  gradTo="#c4b5fd"
+                  bgGlow="rgba(167,139,250,0.4)"
+                />
+              </div>
+              <div className="rounded-2xl glass-panel border border-white" style={{ background: "rgba(255, 255, 255, 0.45)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)" }}>
+                <VitalCard
+                  type="temp"
+                  icon="🌡️"
+                  label="體溫 TEMPERATURE"
+                  value={vitals.temp.toFixed(1)}
+                  unit="°C"
+                  status={isTempHigh ? "微燒" : "正常"}
+                  statusColor={isTempHigh ? "#ef4444" : "#f9a825"}
+                  gradFrom={isTempHigh ? "#ef4444" : "#f9a825"}
+                  gradTo={isTempHigh ? "#fca5a5" : "#ffcc02"}
+                  bgGlow={isTempHigh ? "rgba(239,68,68,0.4)" : "rgba(249,168,37,0.4)"}
+                />
+              </div>
             </>
           );
         })()}

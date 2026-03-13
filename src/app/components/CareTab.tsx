@@ -127,7 +127,7 @@ export function CareTab({
       </div>
 
       {/* Mode Switcher - Segmented Control Style */}
-      <div className="flex p-1.5 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-xl shadow-inner relative overflow-hidden">
+      <div className="flex p-1.5 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-xl shadow-inner relative overflow-hidden mb-2">
         {(["tasks", "journal"] as const).map((mode) => (
           <motion.button
             key={mode}
@@ -138,7 +138,7 @@ export function CareTab({
             {activeMode === mode && (
               <motion.div
                 layoutId="mode-pill"
-                className="absolute inset-0 bg-white rounded-xl shadow-md z-0"
+                className="absolute inset-x-0 inset-y-0.5 bg-white rounded-xl shadow-sm z-0"
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
@@ -344,10 +344,10 @@ export function CareTab({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex-shrink-0 px-5 py-2.5 rounded-2xl flex items-center gap-2 border transition-all duration-300 ${selectedCategory === cat.id
-                  ? "bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30"
-                  : "bg-white/50 text-slate-500 border-white/80"
+                  ? "bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                  : "bg-white/40 text-slate-500 border-white/60"
                   }`}
-                style={{ fontSize: 13, fontWeight: 800 }}
+                style={{ fontSize: 13, fontWeight: 800, backdropFilter: "blur(10px)" }}
               >
                 <span className="scale-110">{cat.icon}</span> {cat.label}
               </motion.button>
