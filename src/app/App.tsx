@@ -3,14 +3,16 @@ import { MonitorTab } from "./components/MonitorTab";
 import { motion, AnimatePresence } from "motion/react";
 import { HealthTab } from "./components/HealthTab";
 import { CareTab, Task, INITIAL_TASKS, INITIAL_JOURNAL_ENTRIES, JournalEntry } from "./components/CareTab";
-import { Mic, MicOff, Sparkles } from "lucide-react";
+import { Mic, MicOff, Sparkles, Settings } from "lucide-react";
+import { SettingsTab } from "./components/SettingsTab";
 
-type Tab = "monitor" | "health" | "care";
+type Tab = "monitor" | "health" | "care" | "settings";
 
 const NAV_ITEMS: { id: Tab; label: string; emoji: string }[] = [
   { id: "monitor", label: "監控", emoji: "🔍" },
   { id: "health", label: "健康", emoji: "❤️" },
   { id: "care", label: "照護", emoji: "🤝" },
+  { id: "settings", label: "設置", emoji: "⚙️" },
 ];
 
 const orbStyles = `
@@ -47,6 +49,38 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>("monitor");
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(INITIAL_JOURNAL_ENTRIES);
+
+  // --- Shared Settings State ---
+  const [backendUrl, setBackendUrl] = useState(() => {
+    const saved = localStorage.getItem('smart_care_backend_url') || 'http://127.0.0.1:8080';
+    return saved.endsWith('/') ? saved.slice(0, -1) : saved;
+  });
+  const [webhookUrl, setWebhookUrl] = useState(() => localStorage.getItem('smart_care_webhook_url') || '');
+  const [videoQuality, setVideoQuality] = useState<"High" | "Mid" | "Low">("High");
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [speakerEnabled, setSpeakerEnabled] = useState(false);
+  const [useLocalCamera, setUseLocalCamera] = useState(() => localStorage.getItem("use_local_camera") === "true");
+  const [cameraSource, setCameraSource] = useState(() => localStorage.getItem("cameraSource") || "");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cameraNonce, setCameraNonce] = useState(Date.now());
+
+  const handleRefreshCamera = async () => {
+    setIsRefreshing(true);
+    try {
+      if (cameraSource) {
+        await fetch(`${backendUrl}/reconnect_camera`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: cameraSource })
+        });
+      }
+      setCameraNonce(Date.now());
+      setTimeout(() => setIsRefreshing(false), 2000);
+    } catch (e) {
+      console.error("Reconnect Error:", e);
+      setIsRefreshing(false);
+    }
+  };
 
   // --- Voice Assistant State & Logic ---
   const [voicePosition, setVoicePosition] = useState({ x: 300, y: 450 });
@@ -269,6 +303,20 @@ function AppContent() {
                   tasks={tasks}
                   onUpdateTasks={setTasks}
                   onTabChange={setActiveTab}
+                  backendUrl={backendUrl}
+                  webhookUrl={webhookUrl}
+                  videoQuality={videoQuality}
+                  micEnabled={micEnabled}
+                  speakerEnabled={speakerEnabled}
+                  useLocalCamera={useLocalCamera}
+                  setUseLocalCamera={setUseLocalCamera}
+                  cameraSource={cameraSource}
+                  setCameraSource={setCameraSource}
+                  isRefreshing={isRefreshing}
+                  setIsRefreshing={setIsRefreshing}
+                  cameraNonce={cameraNonce}
+                  setCameraNonce={setCameraNonce}
+                  handleRefreshCamera={handleRefreshCamera}
                 />
               )}
               {activeTab === "health" && (
@@ -285,6 +333,26 @@ function AppContent() {
                   setTasks={setTasks}
                   journalEntries={journalEntries}
                   setJournalEntries={setJournalEntries}
+                />
+              )}
+              {activeTab === "settings" && (
+                <SettingsTab
+                  backendUrl={backendUrl}
+                  setBackendUrl={setBackendUrl}
+                  webhookUrl={webhookUrl}
+                  setWebhookUrl={setWebhookUrl}
+                  videoQuality={videoQuality}
+                  setVideoQuality={setVideoQuality}
+                  micEnabled={micEnabled}
+                  setMicEnabled={setMicEnabled}
+                  speakerEnabled={speakerEnabled}
+                  setSpeakerEnabled={setSpeakerEnabled}
+                  useLocalCamera={useLocalCamera}
+                  setUseLocalCamera={setUseLocalCamera}
+                  cameraSource={cameraSource}
+                  setCameraSource={setCameraSource}
+                  handleRefreshCamera={handleRefreshCamera}
+                  isRefreshing={isRefreshing}
                 />
               )}
             </motion.div>

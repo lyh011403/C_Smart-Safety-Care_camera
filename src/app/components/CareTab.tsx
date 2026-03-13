@@ -3,34 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { createPortal } from "react-dom";
 import { Plus, Trash2, CheckSquare, Clock, BookOpen, X, ChevronRight, Search, Mic, Calendar, SearchCheck, Info, MessageSquare } from "lucide-react";
 
-export type Category = "Medication" | "Nutrition" | "Exercise" | "Health" | "General";
-
-export const CATEGORY_META: Record<Category, { label: string; emoji: string; color: string; bg: string }> = {
-  Medication: { label: "服藥", emoji: "💊", color: "#f5516c", bg: "rgba(245,81,108,0.12)" },
-  Nutrition: { label: "飲食", emoji: "🥗", color: "#00c48c", bg: "rgba(0,196,140,0.12)" },
-  Exercise: { label: "運動", emoji: "🏃", color: "#4facfe", bg: "rgba(79,172,254,0.12)" },
-  Health: { label: "檢查", emoji: "🩺", color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
-  General: { label: "一般", emoji: "📋", color: "#f9a825", bg: "rgba(249,168,37,0.12)" },
-};
-
-export interface Task {
-  id: number;
-  title: string;
-  note: string;
-  time: string;
-  category: Category;
-  done: boolean;
-}
-
-export interface JournalEntry {
-  id: number;
-  time: string;
-  type: string;
-  category: "alert" | "person" | "health" | "activity" | "system";
-  message: string;
-  description: string;
-  color: string;
-}
+import { Task, TaskCategory as Category, JournalEntry, Tab } from "../types";
 
 export const INITIAL_TASKS: Task[] = [
   { id: 1, title: "服用早晨藥物", note: "降血壓藥 × 1 顆", time: "08:00", category: "Medication", done: true },

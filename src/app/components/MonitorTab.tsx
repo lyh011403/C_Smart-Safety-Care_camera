@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Wifi, Eye, RefreshCw, History, Settings, X, Video, Mic, Volume2, Play, Rewind, FastForward, PlayCircle, BellRing, Search, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Task, CATEGORY_META } from "./CareTab";
+import { MonitorTabProps, Task, CATEGORY_META, Tab } from "../types";
 
 
 
@@ -134,29 +134,25 @@ export function MonitorTab({
   isMobile = false,
   tasks,
   onUpdateTasks,
-  onTabChange
-}: {
-  isActive?: boolean,
-  isMobile?: boolean,
-  tasks: Task[],
-  onUpdateTasks?: React.Dispatch<React.SetStateAction<Task[]>>,
-  onTabChange?: (tab: "monitor" | "health" | "care") => void
-}) {
+  onTabChange,
+  backendUrl,
+  webhookUrl,
+  videoQuality,
+  micEnabled,
+  speakerEnabled,
+  useLocalCamera,
+  setUseLocalCamera,
+  cameraSource,
+  setCameraSource,
+  isRefreshing,
+  setIsRefreshing,
+  cameraNonce,
+  setCameraNonce,
+  handleRefreshCamera,
+}: MonitorTabProps) {
   const [pulse, setPulse] = useState(false);
   const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
-  const [backendUrl, setBackendUrl] = useState(() => {
-    const saved = localStorage.getItem('smart_care_backend_url') || 'http://127.0.0.1:8080';
-    return saved.endsWith('/') ? saved.slice(0, -1) : saved;
-  });
-  const [isEditingUrl, setIsEditingUrl] = useState(false);
-  const [tempUrl, setTempUrl] = useState(backendUrl);
-  const [webhookUrl, setWebhookUrl] = useState(() => localStorage.getItem('smart_care_webhook_url') || '');
-  const [tempWebhookUrl, setTempWebhookUrl] = useState(webhookUrl);
-  const [isEditingWebhook, setIsEditingWebhook] = useState(false);
 
-  const [useLocalCamera, setUseLocalCamera] = useState(() => {
-    return localStorage.getItem("use_local_camera") === "true";
-  });
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [localProcessedImage, setLocalProcessedImage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -185,7 +181,7 @@ export function MonitorTab({
 
         if (riskData) {
           setRiskScore(riskData.score);
-          setRiskHistory((prev: number[]) => [...prev.slice(1), riskData.score]);
+          setRiskHistory((prev) => [...prev.slice(1), riskData.score]);
           setSubScores(riskData.subScores);
         }
       } catch (e) {
@@ -246,7 +242,7 @@ export function MonitorTab({
   };
 
   const toggleFacingMode = () => {
-    setCameraFacingMode(prev => prev === "user" ? "environment" : "user");
+    setCameraFacingMode((prev: "user" | "environment") => prev === "user" ? "environment" : "user");
   };
 
   useEffect(() => {
@@ -258,7 +254,7 @@ export function MonitorTab({
 
   const stopLocalCamera = () => {
     if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+      localStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
       setLocalStream(null);
     }
     if (localLoopRef.current) {
@@ -299,7 +295,7 @@ export function MonitorTab({
             setLocalProcessedImage(data.image);
             if (data.risk) {
               setRiskScore(data.risk.score);
-              setRiskHistory((prev: number[]) => [...prev.slice(1), data.risk.score]);
+              setRiskHistory((prev) => [...prev.slice(1), data.risk.score]);
               setSubScores(data.risk.subScores);
             }
           }
@@ -369,21 +365,8 @@ export function MonitorTab({
   });
   const [editingChId, setEditingChId] = useState<number | null>(null);
   const [liveChannels, setLiveChannels] = useState<Record<number, boolean>>({});
-  const [cameraConnected, setCameraConnected] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("1CH");
   const [activeChannel, setActiveChannel] = useState<number>(1);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [cameraNonce, setCameraNonce] = useState(Date.now());
-  const [cameraSource, setCameraSource] = useState<string>(() => {
-    return localStorage.getItem("cameraSource") || "";
-  });
-
-  // Additional feature states
-  const [showSettings, setShowSettings] = useState(false);
-  const [videoQuality, setVideoQuality] = useState<"High" | "Mid" | "Low">("High");
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [speakerEnabled, setSpeakerEnabled] = useState(true);
-
   const [showPlayback, setShowPlayback] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(50);
   const [searchTime, setSearchTime] = useState("");
@@ -419,35 +402,8 @@ export function MonitorTab({
   };
   const currentDate = new Date().toISOString().split("T")[0].replace(/-/g, "/");
 
-  const handleRefreshCamera = async () => {
-    setIsRefreshing(true);
-    // 預先提示使用者正在連線
-    const targetSource = cameraSource || "自動掃描";
-    console.log(`正在嘗試連接攝影機: ${targetSource}`);
-
-    try {
-      // 如果有填寫 cameraSource，將其發送給後端。增加 ch 參數以確保更新正確頻道。
-      const sourceQuery = `?ch=${activeChannel}${cameraSource ? `&source=${encodeURIComponent(cameraSource)}` : ""}`;
-
-      const res = await fetch(`${backendUrl}/reconnect_camera${sourceQuery}`);
-      if (!res.ok) throw new Error("伺服器回應錯誤");
-
-      const data = await res.json();
-      setCameraConnected(data.connected);
-      setCameraNonce(Date.now()); // 強制刷新圖片載入
-
-      if (data.connected) {
-        alert("✅ 攝影機連接成功！畫面上方應會開始顯示影線。");
-      } else {
-        alert("❌ 連接失敗：找不到攝影機訊號。\n\n請檢查：\n1. 您的設備是否已連上攝影機的 WiFi？\n2. RTSP 位址是否輸入正確？");
-      }
-    } catch (e) {
-      console.error("連線錯誤:", e);
-      alert("⚠️ 無法連線至影像伺服器。\n請確認「🛑啟動_SmartCare.bat」是否仍在執行中，且伺服器通訊正常。");
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  // 改用後端輪詢結果作為連線指標，或是本地鏡頭已啟動
+  const [cameraConnected, setCameraConnected] = useState(false);
 
   // 改用後端輪詢結果作為連線指標，或是本地鏡頭已啟動
   const effectiveLive = cameraConnected || useLocalCamera;
@@ -973,258 +929,10 @@ export function MonitorTab({
           </div>
         </motion.div>
 
-        {/* System Settings Button */}
-        <motion.div
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="flex flex-col items-center justify-center p-3.5 rounded-2xl gap-2 glass-panel cursor-pointer"
-          onClick={() => setShowSettings(true)}
-        >
-          <div className="flex items-center gap-2">
-            <Settings size={18} className="text-gray-600" />
-            <span className="text-gray-700" style={{ fontSize: 14, fontWeight: 700 }}>系統設置</span>
-          </div>
-        </motion.div>
       </div>
 
-      {/* Settings Modal */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ y: "100%", opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full sm:w-[350px] bg-[#F0F4F8] rounded-t-3xl sm:rounded-3xl p-6 pb-10 sm:pb-6 shadow-2xl relative flex flex-col gap-6"
-            >
-              <button
-                onClick={() => setShowSettings(false)}
-                className="absolute top-5 right-5 p-2 rounded-full bg-white shadow-sm text-gray-500 hover:text-red-500 transition-colors"
-                style={{ boxShadow: "2px 2px 5px #d1d9e6, -2px -2px 5px #ffffff" }}
-              >
-                <X size={18} />
-              </button>
 
-              <div className="flex items-center gap-2 mb-2">
-                <Settings size={22} className="text-gray-700" />
-                <h3 className="text-lg font-bold text-gray-700">系統與設備</h3>
-                <span className="text-[10px] text-gray-400 ml-auto">v1.2.2</span>
-              </div>
 
-              {/* Backend URL Setting */}
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold text-gray-400 flex items-center gap-1.5"><Wifi size={14} /> 後端伺服器位址 (Backend URL)</span>
-                <div className="flex bg-[#e4ebf2] rounded-xl p-1 gap-1" style={{ boxShadow: "inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #ffffff" }}>
-                  {isEditingUrl ? (
-                    <>
-                      <input
-                        type="text"
-                        value={tempUrl}
-                        onChange={(e) => setTempUrl(e.target.value)}
-                        className="flex-1 bg-transparent border-none outline-none px-3 py-1.5 text-xs font-bold text-gray-700"
-                        placeholder="http://127.0.0.1:8080"
-                      />
-                      <button
-                        onClick={() => {
-                          let formatted = tempUrl.trim();
-                          if (formatted && formatted.endsWith('/')) formatted = formatted.slice(0, -1);
-                          setBackendUrl(formatted);
-                          localStorage.setItem('smart_care_backend_url', formatted);
-                          setIsEditingUrl(false);
-                        }}
-                        className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all disabled:bg-gray-400 min-w-[70px]"
-                      >
-                        儲存
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flex-1 px-3 py-1.5 text-xs font-bold text-gray-700 truncate">{backendUrl}</span>
-                      <button
-                        onClick={() => {
-                          setTempUrl(backendUrl);
-                          setIsEditingUrl(true);
-                        }}
-                        className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all min-w-[70px]"
-                      >
-                        編輯
-                      </button>
-                    </>
-                  )}
-                </div>
-                <span className="text-[10px] text-gray-400 px-1 leading-relaxed">* 請確保後端伺服器已啟動並可訪問。</span>
-              </div>
-
-              {/* n8n Webhook Setting */}
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold text-gray-400 flex items-center gap-1.5"><Sparkles size={14} /> n8n 通知網址 (Webhook)</span>
-                <div className="flex bg-[#e4ebf2] rounded-xl p-1 gap-1" style={{ boxShadow: "inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #ffffff" }}>
-                  {isEditingWebhook ? (
-                    <>
-                      <input
-                        type="text"
-                        value={tempWebhookUrl}
-                        onChange={(e) => setTempWebhookUrl(e.target.value)}
-                        className="flex-1 bg-transparent border-none outline-none px-3 py-1.5 text-xs font-bold text-gray-700"
-                        placeholder="https://n8n.your-domain.com/webhook/..."
-                      />
-                      <button
-                        onClick={() => {
-                          const formatted = tempWebhookUrl.trim();
-                          setWebhookUrl(formatted);
-                          localStorage.setItem('smart_care_webhook_url', formatted);
-                          setIsEditingWebhook(false);
-                        }}
-                        className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all min-w-[70px]"
-                      >
-                        儲存
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flex-1 px-3 py-1.5 text-xs font-bold text-gray-700 truncate">{webhookUrl || '未設定 (點擊編輯)'}</span>
-                      <div className="flex gap-1">
-                        {webhookUrl && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                const res = await fetch(`${backendUrl}/test_webhook`);
-                                const data = await res.json();
-                                if (data.success) {
-                                  alert(`✅ ${data.message}`);
-                                } else {
-                                  alert(`❌ ${data.message}`);
-                                }
-                              } catch (e) {
-                                alert("❌ 發送失敗，請檢查後端連線");
-                              }
-                            }}
-                            className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all"
-                            title="發送測試通知至 n8n"
-                          >
-                            測試
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            setTempWebhookUrl(webhookUrl);
-                            setIsEditingWebhook(true);
-                          }}
-                          className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all min-w-[70px]"
-                        >
-                          編輯
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <span className="text-[10px] text-gray-400 px-1 leading-relaxed">* 當偵測到危險時，將自動發送 POST 請求至此網址。</span>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs font-bold text-gray-400 flex items-center gap-1.5"><Video size={14} /> 監視器畫質</span>
-                  <div className="flex rounded-xl p-1 bg-[#e4ebf2]" style={{ boxShadow: "inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #ffffff" }}>
-                    {["Low", "Mid", "High"].map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => setVideoQuality(level as "High" | "Mid" | "Low")}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${videoQuality === level ? 'bg-blue-500 text-white shadow-md' : 'text-gray-500'}`}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/50" style={{ boxShadow: "2px 2px 5px #d1d9e6, -2px -2px 5px #ffffff" }}>
-                  <div className="flex items-center gap-2">
-                    <Mic size={16} className={micEnabled ? 'text-green-500' : 'text-gray-400'} />
-                    <span className="text-sm font-bold text-gray-600">現場收音開關</span>
-                  </div>
-                  <button
-                    onClick={() => setMicEnabled(!micEnabled)}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${micEnabled ? 'bg-green-400' : 'bg-gray-300'}`}
-                  >
-                    <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${micEnabled ? 'left-6' : 'left-0.5'}`} style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }} />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/50" style={{ boxShadow: "2px 2px 5px #d1d9e6, -2px -2px 5px #ffffff" }}>
-                  <div className="flex items-center gap-2">
-                    <Volume2 size={16} className={speakerEnabled ? 'text-blue-500' : 'text-gray-400'} />
-                    <span className="text-sm font-bold text-gray-600">雙向麥克風通話</span>
-                  </div>
-                  <button
-                    onClick={() => setSpeakerEnabled(!speakerEnabled)}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${speakerEnabled ? 'bg-blue-400' : 'bg-gray-300'}`}
-                  >
-                    <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${speakerEnabled ? 'left-6' : 'left-0.5'}`} style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }} />
-                  </button>
-                </div>
-                <p className="text-[10px] text-gray-400 px-1 italic">* 提示：目前音訊開關為 UI 模擬功能，暫未串接實體音訊。</p>
-
-                <div className="flex flex-col gap-2 mt-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-gray-400 flex items-center gap-1.5"><Video size={14} /> 影像來源設定</span>
-                  </div>
-
-                  {/* Local Camera Toggle */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/50 mb-3" style={{ boxShadow: "2px 2px 5px #d1d9e6, -2px -2px 5px #ffffff" }}>
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1.5 rounded-lg ${useLocalCamera ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-                        <Sparkles size={16} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-700">使用手機鏡頭模式</span>
-                        <span className="text-[10px] text-gray-400">啟用後將取代目前的頻道監控</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const next = !useLocalCamera;
-                        setUseLocalCamera(next);
-                        localStorage.setItem("use_local_camera", String(next));
-                      }}
-                      className={`w-12 h-6 rounded-full relative transition-colors ${useLocalCamera ? 'bg-blue-500' : 'bg-gray-300'}`}
-                    >
-                      <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${useLocalCamera ? 'left-6' : 'left-0.5'}`} style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }} />
-                    </button>
-                  </div>
-
-                  <span className="text-[10px] text-gray-400 font-bold mb-1">或是手動連線 WiFi 攝影機 (RTSP)</span>
-                  <div className="flex bg-[#e4ebf2] rounded-xl p-1 gap-1" style={{ boxShadow: "inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #ffffff" }}>
-                    <input
-                      type="text"
-                      placeholder="rtsp://192.168.1.254/..."
-                      value={cameraSource}
-                      onChange={(e) => {
-                        setCameraSource(e.target.value);
-                        localStorage.setItem("cameraSource", e.target.value);
-                      }}
-                      className="flex-1 bg-transparent border-none outline-none px-3 py-1.5 text-xs font-bold text-gray-700"
-                    />
-                    <button
-                      onClick={handleRefreshCamera}
-                      disabled={isRefreshing}
-                      className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all disabled:bg-gray-400 min-w-[70px]"
-                    >
-                      {isRefreshing ? "連接中..." : "連接"}
-                    </button>
-                  </div>
-                  <span className="text-[10px] text-gray-400 px-1 leading-relaxed">* 例如 SJCAM C100 請先連上其 WiFi 後，嘗試輸入：<br />rtsp://192.168.1.254/sjcam.mov</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Playback Modal */}
       <AnimatePresence>

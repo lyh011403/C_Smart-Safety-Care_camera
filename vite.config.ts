@@ -1,8 +1,11 @@
 import { defineConfig } from 'vite'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   base: '/C_Smart-Safety-Care_camera/',
@@ -17,6 +20,10 @@ export default defineConfig({
         short_name: 'SmartCare',
         description: 'AI-powered Safety Monitoring and Risk Assessment',
         theme_color: '#0f172a',
+        background_color: '#0f172a',
+        display: 'standalone',
+        orientation: 'portrait',
+        start_url: '.',
         icons: [
           {
             src: 'pwa-icon.png',
