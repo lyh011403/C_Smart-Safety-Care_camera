@@ -422,7 +422,13 @@ export function MonitorTab({
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-4">
+    <div
+      className="flex flex-col gap-5 p-4 pb-32 overflow-y-auto"
+      style={{
+        maxHeight: isMobile ? "calc(100vh - 80px)" : "calc(812px - 80px)",
+        background: "transparent"
+      }}
+    >
 
       <style>{`
         @keyframes selectionGlow {

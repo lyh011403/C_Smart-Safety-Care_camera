@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { createPortal } from "react-dom";
 import { Plus, Trash2, CheckSquare, Clock, BookOpen, X, ChevronRight, Search, Mic, Calendar, SearchCheck, Info, MessageSquare } from "lucide-react";
-
-import { Task, TaskCategory as Category, JournalEntry, Tab } from "../types";
+import { Task, TaskCategory as Category, JournalEntry, Tab, CATEGORY_META } from "../types";
 
 export const INITIAL_TASKS: Task[] = [
   { id: 1, title: "服用早晨藥物", note: "降血壓藥 × 1 顆", time: "08:00", category: "Medication", done: true },
@@ -104,56 +103,57 @@ export function CareTab({
   }, [confirmDeleteId]);
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-4 relative">
-      {/* Header */}
-      <div className="flex items-center justify-between pt-1">
+    <div
+      className="flex flex-col gap-5 p-4 pb-32 overflow-y-auto"
+      style={{
+        maxHeight: isMobile ? "calc(100vh - 80px)" : "calc(812px - 80px)",
+        background: "transparent"
+      }}
+    >
+      {/* Header with Glassmorphism */}
+      <div className="flex items-center justify-between mb-1">
         <div>
-          <h2 className="text-gray-700" style={{ fontWeight: 700, fontSize: 18 }}>照護管理</h2>
-          <p className="text-xs text-gray-400" style={{ fontWeight: 500 }}>任務與事件紀錄</p>
+          <h2 className="text-2xl font-black text-gray-800 tracking-tight">智能照護</h2>
+          <p className="text-gray-500 font-bold text-xs mt-0.5 opacity-70">AI 輔助日常追蹤與分析</p>
         </div>
-        {activeMode === "tasks" && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center shimmer-container transition-all active:scale-90"
-            style={{
-              background: "linear-gradient(135deg, rgba(79, 172, 254, 0.9), rgba(0, 242, 254, 0.9))",
-              boxShadow: "3px 3px 10px rgba(79,172,254,0.4), inset 0 0 0 1px rgba(255,255,255,0.3)",
-            }}
-          >
-            <div className="shimmer-effect" />
-            <Plus size={20} className="text-white relative z-10" />
-          </button>
-        )}
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all bg-white/60 active:scale-90 shadow-lg shadow-blue-500/10 border border-white"
+          style={{ backdropFilter: "blur(10px)" }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-inner">
+            <Plus size={20} strokeWidth={3} />
+          </div>
+        </button>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="flex p-1.5 rounded-2xl glass-panel relative">
+      {/* Mode Switcher - Segmented Control Style */}
+      <div className="flex p-1.5 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-xl shadow-inner relative overflow-hidden">
         {(["tasks", "journal"] as const).map((mode) => (
           <motion.button
             key={mode}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             onClick={() => setActiveMode(mode)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300 relative z-10"
+            className="flex-1 flex items-center justify-center py-2.5 rounded-xl gap-2 relative transition-all"
+            style={{ WebkitTapHighlightColor: "transparent" }}
           >
             {activeMode === mode && (
               <motion.div
-                layoutId="active-mode-bg"
-                className="absolute inset-0 bg-blue-500 rounded-xl shadow-lg"
+                layoutId="mode-pill"
+                className="absolute inset-0 bg-white rounded-xl shadow-md z-0"
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <span className="relative z-20 flex items-center gap-2">
+            <span className="relative z-10 flex items-center gap-2">
               {mode === "tasks" ? (
-                <CheckSquare size={16} className={activeMode === mode ? "text-white" : "text-gray-400"} />
+                <CheckSquare size={16} className={activeMode === mode ? "text-blue-500" : "text-gray-400"} />
               ) : (
-                <BookOpen size={16} className={activeMode === mode ? "text-white" : "text-gray-400"} />
+                <BookOpen size={16} className={activeMode === mode ? "text-blue-500" : "text-gray-400"} />
               )}
               <span
                 style={{
                   fontSize: 13,
                   fontWeight: 800,
-                  color: activeMode === mode ? "#fff" : "#9ba8b4",
+                  color: activeMode === mode ? "#1e293b" : "#94a3b8",
                 }}
               >
                 {mode === "tasks" ? "待辦任務" : "事件日誌"}
@@ -168,32 +168,33 @@ export function CareTab({
         <>
           {/* Progress Bar */}
           <div
-            className="rounded-3xl px-5 py-4 glass-panel"
+            className="rounded-3xl px-6 py-5 glass-panel relative overflow-hidden"
             style={{
-              background: "rgba(255, 255, 255, 0.4)",
-              border: "1px solid rgba(255, 255, 255, 0.5)",
+              background: "rgba(255, 255, 255, 0.45)",
+              border: "1px solid rgba(255, 255, 255, 0.7)",
+              boxShadow: "0 10px 25px -10px rgba(59, 130, 246, 0.15)"
             }}
           >
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-gray-600 font-extrabold" style={{ fontSize: 13 }}>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[#475569] font-black tracking-tight" style={{ fontSize: 13 }}>
                 今日進度 · {completedCount}/{tasks.length}
               </span>
-              <span className="text-blue-500 font-black" style={{ fontSize: 13 }}>{progress}%</span>
+              <span className="text-blue-600 font-black" style={{ fontSize: 14 }}>{progress}%</span>
             </div>
             <div
-              className="h-3 rounded-full overflow-hidden bg-white/30 backdrop-blur-inner"
+              className="h-3 rounded-full overflow-hidden bg-slate-200/50"
               style={{
-                boxShadow: "inset 1px 1px 3px rgba(0,0,0,0.05)",
+                boxShadow: "inset 0 1px 3px rgba(0,0,0,0.05)",
               }}
             >
               <motion.div
                 className="h-full rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
-                transition={{ duration: 1, ease: "circOut" }}
+                transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
                 style={{
-                  background: "linear-gradient(90deg, #4facfe, #00f2fe)",
-                  boxShadow: "0 0 10px rgba(79,172,254,0.5)",
+                  background: "linear-gradient(90deg, #3b82f6, #60a5fa)",
+                  boxShadow: "0 0 12px rgba(59,130,246,0.3)",
                 }}
               />
             </div>
@@ -202,18 +203,20 @@ export function CareTab({
           {/* Task List */}
           {tasks.length === 0 ? (
             <div
-              className="flex flex-col items-center py-10 gap-3 rounded-2xl"
+              className="flex flex-col items-center py-12 gap-4 rounded-3xl animate-in zoom-in-95 duration-500"
               style={{
-                background: "#F0F4F8",
-                boxShadow: "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff",
+                background: "rgba(255, 255, 255, 0.4)",
+                border: "1px dashed rgba(59, 130, 246, 0.2)",
               }}
             >
-              <span style={{ fontSize: 36 }}>🎉</span>
-              <p className="text-gray-500" style={{ fontSize: 13, fontWeight: 700 }}>所有任務已完成！</p>
-              <p className="text-gray-400" style={{ fontSize: 11, fontWeight: 500 }}>點擊右上角「＋」新增任務</p>
+              <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center text-4xl shadow-inner">🎉</div>
+              <div className="text-center">
+                <p className="text-gray-700 font-black" style={{ fontSize: 15 }}>所有任務已完成！</p>
+                <p className="text-gray-400 mt-1 font-bold" style={{ fontSize: 11 }}>點擊右上角「＋」新增今日任務</p>
+              </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 mt-1">
+            <div className="flex flex-col gap-4">
               {tasks.map((task) => {
                 const meta = CATEGORY_META[task.category];
                 const isConfirming = confirmDeleteId === task.id;
@@ -221,93 +224,84 @@ export function CareTab({
                   <motion.div
                     key={task.id}
                     layout
-                    whileTap={{ scale: 0.96 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    className="flex items-center gap-4 px-4 py-4 rounded-[24px] cursor-pointer transition-all duration-300 glass-panel"
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="flex items-center gap-4 px-5 py-5 rounded-[28px] cursor-pointer transition-all duration-300 relative overflow-hidden group border border-white"
                     style={{
-                      background: task.done ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.5)",
-                      border: task.done ? "1px solid rgba(255, 255, 255, 0.3)" : "1.5px solid rgba(255, 255, 255, 0.6)",
-                      opacity: task.done ? 0.65 : 1,
+                      background: task.done ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.65)",
+                      backdropFilter: "blur(12px)",
+                      boxShadow: task.done ? "none" : "0 8px 30px rgba(0,0,0,0.04)",
+                      opacity: task.done ? 0.7 : 1,
                     }}
                     onClick={() => toggleTask(task.id)}
                   >
                     {/* Checkbox */}
-                    <div
-                      className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center transition-all duration-300"
-                      style={
-                        task.done
-                          ? {
-                            background: "linear-gradient(135deg,#4facfe,#00f2fe)",
-                            boxShadow: "0 0 12px rgba(79,172,254,0.5)",
-                          }
-                          : {
-                            background: "rgba(255,255,255,0.4)",
-                            border: "1.5px solid rgba(0,0,0,0.05)",
-                          }
-                      }
+                    <motion.div
+                      className="w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center transition-all duration-300 border"
+                      animate={{
+                        scale: task.done ? 1 : 1,
+                        backgroundColor: task.done ? "rgba(59, 130, 246, 1)" : "rgba(255, 255, 255, 0.5)",
+                        borderColor: task.done ? "rgba(59, 130, 246, 0.2)" : "rgba(203, 213, 225, 0.5)"
+                      }}
+                      style={{
+                        boxShadow: task.done ? "0 4px 12px rgba(59,130,246,0.3)" : "inset 0 2px 4px rgba(0,0,0,0.02)"
+                      }}
                     >
-                      {task.done && (
-                        <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                          <path d="M2 7l4 4 6-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      {task.done ? (
+                        <CheckSquare size={18} className="text-white" strokeWidth={3} />
+                      ) : (
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
                       )}
-                    </div>
+                    </motion.div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <p
-                        className="text-gray-800"
+                        className="text-gray-800 tracking-tight"
                         style={{
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: 800,
                           textDecoration: task.done ? "line-through" : "none",
-                          color: task.done ? "#9ba8b4" : "#2d3748",
+                          color: task.done ? "#64748b" : "#1e293b",
                         }}
                       >
                         {task.title}
                       </p>
                       {task.note && (
-                        <p className="text-gray-500 truncate mt-0.5" style={{ fontSize: 11, fontWeight: 600 }}>
+                        <p className="text-slate-500 truncate mt-1 font-bold" style={{ fontSize: 11 }}>
                           {task.note}
                         </p>
                       )}
-                      <div className="flex items-center gap-2.5 mt-2">
+                      <div className="flex items-center gap-2 mt-2.5">
                         <span
                           className="flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-md"
-                          style={{ background: `${meta.color}20`, color: meta.color, fontSize: 10, fontWeight: 800, border: `1px solid ${meta.color}30` }}
+                          style={{ background: `${meta.color}15`, color: meta.color, fontSize: 10, fontWeight: 900, border: `1px solid ${meta.color}25` }}
                         >
-                          {meta.emoji} {task.category}
+                          {meta.emoji} {meta.label}
                         </span>
                         {task.time !== "--:--" && (
-                          <span className="flex items-center gap-1 text-gray-400 font-bold" style={{ fontSize: 10 }}>
-                            <Clock size={11} /> {task.time}
+                          <span className="flex items-center gap-1.5 text-slate-400 font-black" style={{ fontSize: 10 }}>
+                            <Clock size={12} strokeWidth={2.5} /> {task.time}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Delete Button */}
+                    {/* Delete Icon Overlay */}
                     <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.96 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      whileHover={{ scale: 1.1, backgroundColor: "rgba(239, 68, 68, 0.1)" }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={(e) => handleDeleteClick(task.id, e)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 glass-panel"
-                      style={
-                        isConfirming
-                          ? {
-                            background: "linear-gradient(135deg,#f43f5e,#fb923c)",
-                            border: "none",
-                          }
-                          : {
-                            background: "rgba(0,0,0,0.03)",
-                            border: "1px solid rgba(0,0,0,0.05)",
-                          }
-                      }
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                      style={{
+                        background: isConfirming ? "#ef4444" : "transparent",
+                        border: isConfirming ? "none" : "1px solid rgba(0,0,0,0.03)"
+                      }}
                     >
                       <Trash2
-                        size={16}
-                        style={{ color: isConfirming ? "#fff" : "#a0aec0" }}
+                        size={18}
+                        strokeWidth={2.5}
+                        style={{ color: isConfirming ? "#fff" : "#94a3b8" }}
                       />
                     </motion.button>
                   </motion.div>
@@ -320,24 +314,25 @@ export function CareTab({
 
       {/* Journal Mode */}
       {activeMode === "journal" && (
-        <div className="flex flex-col gap-4 pb-20">
-          {/* Top Control Bar: Search & Mic */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+        <div className="flex flex-col gap-5">
+          {/* Top Search Bar */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-blue-500/5 rounded-2xl blur-xl transition-all group-focus-within:bg-blue-500/10" />
+            <div className="relative flex items-center">
+              <Search className="absolute left-4.5 text-gray-400" size={18} strokeWidth={2.5} />
               <input
                 type="text"
-                placeholder="搜尋事件或紀錄..."
+                placeholder="搜尋事件提醒或歷史紀錄..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-2xl glass-panel outline-none text-sm font-semibold text-gray-700 transition-all focus:ring-2 focus:ring-blue-400/20"
-                style={{ background: "rgba(255,255,255,0.4)" }}
+                className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/60 border border-white text-sm font-bold text-gray-700 outline-none transition-all placeholder:text-gray-300 focus:bg-white focus:shadow-xl focus:shadow-blue-500/5"
+                style={{ backdropFilter: "blur(10px)" }}
               />
             </div>
           </div>
 
-          {/* Quick Category Filters (Chips) */}
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {/* Quick Filters */}
+          <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
             {[
               { id: "all", label: "全部", icon: <SearchCheck size={14} /> },
               { id: "alert", label: "警報", icon: "🚨" },
@@ -349,29 +344,29 @@ export function CareTab({
                 key={cat.id}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-1.5 border transition-all duration-300 ${selectedCategory === cat.id
-                  ? "bg-blue-500 text-white border-blue-400 shadow-lg shadow-blue-400/30"
-                  : "bg-white/40 text-gray-500 border-white/50 backdrop-blur-md"
+                className={`flex-shrink-0 px-5 py-2.5 rounded-2xl flex items-center gap-2 border transition-all duration-300 ${selectedCategory === cat.id
+                  ? "bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30"
+                  : "bg-white/50 text-slate-500 border-white/80"
                   }`}
-                style={{ fontSize: 12, fontWeight: 700 }}
+                style={{ fontSize: 13, fontWeight: 800 }}
               >
-                {cat.icon} {cat.label}
+                <span className="scale-110">{cat.icon}</span> {cat.label}
               </motion.button>
             ))}
           </div>
 
-          {/* Date Selector Row */}
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Calendar size={14} className="text-blue-500" />
-              <span style={{ fontSize: 13, fontWeight: 800 }}>歷史日期</span>
+          {/* Date Selector */}
+          <div className="flex items-center justify-between bg-white/30 px-4 py-3 rounded-2xl border border-white/50">
+            <div className="flex items-center gap-2.5">
+              <Calendar size={15} className="text-blue-500" strokeWidth={2.5} />
+              <span className="text-slate-600 font-black" style={{ fontSize: 13 }}>歷史日誌日期</span>
             </div>
             <div className="flex gap-2">
               {["2025-05-18", "2025-05-19", "2025-05-20"].map(d => (
                 <button
                   key={d}
                   onClick={() => setSelectedDate(d)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border transition-all ${selectedDate === d ? "bg-white text-blue-600 border-blue-200" : "bg-white/20 text-gray-400 border-transparent"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black border transition-all ${selectedDate === d ? "bg-white text-blue-600 border-blue-200 shadow-sm" : "bg-transparent text-slate-400 border-transparent"
                     }`}
                 >
                   {d.split('-')[2]}
@@ -380,30 +375,8 @@ export function CareTab({
             </div>
           </div>
 
-          {/* AI Daily Summary Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-3xl glass-panel relative overflow-hidden shimmer-container"
-            style={{
-              background: "linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.1))",
-              border: "1.5px solid rgba(79, 172, 254, 0.2)"
-            }}
-          >
-            <div className="shimmer-effect" />
-            <div className="flex items-center gap-2 mb-2 relative z-10">
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                <Info size={16} />
-              </div>
-              <span className="text-blue-600" style={{ fontSize: 13, fontWeight: 800 }}>AI 今日生活觀察總結</span>
-            </div>
-            <p className="text-gray-600 leading-relaxed relative z-10" style={{ fontSize: 12, fontWeight: 600 }}>
-              今日整體狀況穩定。上午完成散步活動，步態指標正常；血壓量測紀錄與服藥行為皆準時完成。中午有陌生訪客（推測為外送員），目前防護狀態良好。
-            </p>
-          </motion.div>
-
           {/* Log List */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {journalEntries
               .filter(e => (selectedCategory === "all" || e.category === selectedCategory))
               .filter(e => e.message.includes(searchQuery) || e.type.includes(searchQuery))
@@ -415,34 +388,36 @@ export function CareTab({
                     layout
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                    className="rounded-2xl overflow-hidden glass-panel cursor-pointer transition-all duration-300"
+                    className="rounded-3xl overflow-hidden transition-all duration-500 group"
                     style={{
-                      background: isExpanded ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.45)",
-                      border: isExpanded ? "1.5px solid rgba(59, 130, 246, 0.4)" : "1px solid rgba(255, 255, 255, 0.5)",
-                      boxShadow: isExpanded ? "0 20px 40px -15px rgba(0,0,0,0.1)" : "0 4px 12px rgba(0,0,0,0.03)"
+                      background: isExpanded ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.55)",
+                      border: isExpanded ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(255, 255, 255, 0.8)",
+                      boxShadow: isExpanded ? "0 20px 40px -12px rgba(0,0,0,0.12)" : "0 4px 15px rgba(0,0,0,0.03)",
+                      backdropFilter: "blur(15px)"
                     }}
                   >
-                    <div className="flex items-center gap-3 px-4 py-4">
+                    <div className="flex items-center gap-4 px-5 py-5">
                       <div
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ background: entry.color, boxShadow: `0 0 10px ${entry.color}` }}
-                      />
+                        className="w-3 h-3 rounded-full flex-shrink-0 relative"
+                        style={{ background: entry.color }}
+                      >
+                        <div className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ backgroundColor: entry.color }} />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="flex items-center gap-1.5" style={{ fontSize: 13, fontWeight: 800, color: entry.color }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-black tracking-tight" style={{ fontSize: 14, color: entry.color }}>
                             {entry.type}
                           </span>
-                          <div className="flex items-center gap-1 text-gray-400">
-                            <Clock size={10} />
-                            <span style={{ fontSize: 10, fontWeight: 600 }}>{entry.time}</span>
-                          </div>
+                          <span className="flex items-center gap-1 text-slate-400 font-bold" style={{ fontSize: 11 }}>
+                            <Clock size={11} /> {entry.time}
+                          </span>
                         </div>
-                        <p className={`text-gray-600 transition-all ${isExpanded ? 'font-bold' : 'font-medium'}`} style={{ fontSize: 13 }}>
+                        <p className={`text-slate-700 leading-tight ${isExpanded ? 'font-black' : 'font-bold'}`} style={{ fontSize: 14 }}>
                           {entry.message}
                         </p>
                       </div>
-                      <motion.div animate={{ rotate: isExpanded ? 90 : 0 }}>
-                        <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+                      <motion.div animate={{ rotate: isExpanded ? 90 : 0 }} className="text-slate-300">
+                        <ChevronRight size={18} strokeWidth={3} />
                       </motion.div>
                     </div>
 
@@ -452,65 +427,40 @@ export function CareTab({
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="px-4 pb-4 border-t border-gray-100/50 pt-3"
+                          className="px-5 pb-5 border-t border-slate-100/60 pt-4"
                         >
-                          <div className="flex flex-col gap-3">
-                            <div className="flex items-start gap-2 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/30">
-                              <MessageSquare size={14} className="text-blue-500 mt-0.5" />
-                              <p className="text-gray-600 leading-relaxed" style={{ fontSize: 12, fontWeight: 600 }}>
+                          <div className="flex flex-col gap-4">
+                            <div className="flex items-start gap-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/50">
+                              <MessageSquare size={16} className="text-blue-500 mt-0.5" />
+                              <p className="text-slate-600 leading-relaxed font-bold" style={{ fontSize: 13 }}>
                                 {entry.description}
                               </p>
                             </div>
 
-                            {/* Mock AI Capture Snapshot */}
                             {(entry.category === 'person' || entry.category === 'alert') && (
-                              <div className="relative rounded-xl overflow-hidden aspect-video group">
-                                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                              <div className="relative rounded-2xl overflow-hidden aspect-video shadow-lg">
                                 <img
                                   src={`https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=400&q=80`}
                                   alt="Capture"
-                                  className="w-full h-full object-cover relative z-10 transition-transform duration-700 group-hover:scale-110"
+                                  className="w-full h-full object-cover"
                                 />
-                                <div className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-red-500/80 text-white text-[8px] font-bold backdrop-blur-sm">
-                                  LIVE CAPTURE
-                                </div>
-                                <div className="absolute bottom-2 right-2 z-20 px-2 py-0.5 rounded bg-black/40 text-white text-[8px] font-mono backdrop-blur-sm">
-                                  CAM-01 · 14:32:05
-                                </div>
+                                <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-red-600 text-white text-[9px] font-black tracking-widest">LIVE CAPTURE</div>
                               </div>
                             )}
 
                             <div className="flex gap-2">
-                              {confirmDeleteJournalId === entry.id ? (
-                                <motion.button
-                                  initial={{ scale: 0.9, opacity: 0 }}
-                                  animate={{ scale: 1, opacity: 1 }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setJournalEntries(prev => prev.filter(item => item.id !== entry.id));
-                                    setConfirmDeleteJournalId(null);
-                                  }}
-                                  className="flex-1 py-2 rounded-xl bg-red-500 text-white text-[11px] font-bold shadow-lg shadow-red-500/30"
-                                >
-                                  確認刪除紀錄？
-                                </motion.button>
-                              ) : (
-                                <>
-                                  <button className="flex-1 py-2 rounded-xl bg-blue-500 text-white text-[11px] font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-transform">
-                                    查看錄影回放
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setConfirmDeleteJournalId(entry.id);
-                                    }}
-                                    className="px-4 py-2 rounded-xl glass-panel text-red-400 text-[11px] font-bold active:scale-95 transition-transform"
-                                    style={{ background: "rgba(245,81,108,0.1)" }}
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </>
-                              )}
+                              <button className="flex-1 py-3 rounded-2xl bg-blue-600 text-white text-xs font-black shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                                查看錄影回放
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteJournalId(entry.id);
+                                }}
+                                className="px-5 py-3 rounded-2xl bg-slate-100 text-slate-400 text-xs active:scale-95 transition-all hover:bg-red-50 hover:text-red-500"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
                         </motion.div>
@@ -519,181 +469,121 @@ export function CareTab({
                   </motion.div>
                 );
               })}
-
-            {/* Empty Search Result */}
-            {journalEntries.filter((e: JournalEntry) => (selectedCategory === "all" || e.category === selectedCategory)).filter((e: JournalEntry) => e.message.includes(searchQuery) || e.type.includes(searchQuery)).length === 0 && (
-              <div className="flex flex-col items-center py-10 gap-3">
-                <SearchCheck size={32} className="text-gray-300" />
-                <p className="text-gray-400 font-bold" style={{ fontSize: 13 }}>查無相關日誌紀錄</p>
-              </div>
-            )}
-
-            <p className="text-center text-gray-400 py-6" style={{ fontSize: 11, fontWeight: 700 }}>
-              — 今日記錄共 {journalEntries.length} 筆 · 已過濾 —
-            </p>
           </div>
-
         </div>
       )}
 
-      {/* Glassmorphism Bottom Sheet (Fixed positioning via Portal) */}
+      {/* Glassmorphism Bottom Sheet */}
       {mounted && showForm && createPortal(
         <div
           ref={overlayRef}
           className="fixed inset-0 z-[9999] flex items-end justify-center"
-          style={{ background: "rgba(20,30,48,0.45)", backdropFilter: "blur(8px)" }}
+          style={{ background: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(12px)" }}
           onClick={(e) => { if (e.target === overlayRef.current) setShowForm(false); }}
         >
-          <div
-            className="w-full max-w-sm rounded-t-3xl p-5"
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="w-full max-w-sm rounded-t-[40px] p-7 border-t border-white"
             style={{
-              background: "rgba(240,244,248,0.92)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 -8px 32px rgba(79,172,254,0.15), 0 -2px 10px rgba(0,0,0,0.1)",
-              maxHeight: "85vh",
+              background: "rgba(255, 255, 255, 0.92)",
+              backdropFilter: "blur(30px)",
+              boxShadow: "0 -20px 50px -10px rgba(0,0,0,0.15)",
+              maxHeight: "90vh",
               overflowY: "auto",
             }}
           >
-            {/* Form Header */}
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-gray-700" style={{ fontWeight: 700, fontSize: 16 }}>新增照護任務</p>
+            {/* Grab Handle */}
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
+
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">新增照護任務</h3>
               <button
                 onClick={() => setShowForm(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: "#F0F4F8", boxShadow: "3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff" }}
+                className="w-9 h-9 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-400 active:scale-90"
               >
-                <X size={14} className="text-gray-400" />
+                <X size={18} strokeWidth={3} />
               </button>
             </div>
 
-            {/* Task Name */}
-            <div className="mb-3">
-              <label className="text-gray-500 mb-1.5 block" style={{ fontSize: 11, fontWeight: 700 }}>
-                任務名稱 <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="輸入任務名稱..."
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl outline-none text-gray-700 placeholder-gray-300"
-                style={{
-                  background: "#F0F4F8",
-                  boxShadow: "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  border: "none",
-                }}
-              />
-            </div>
-
-            {/* Note */}
-            <div className="mb-3">
-              <label className="text-gray-500 mb-1.5 block" style={{ fontSize: 11, fontWeight: 700 }}>備註說明</label>
-              <input
-                type="text"
-                placeholder="額外備注（選填）..."
-                value={formNote}
-                onChange={(e) => setFormNote(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl outline-none text-gray-700 placeholder-gray-300"
-                style={{
-                  background: "#F0F4F8",
-                  boxShadow: "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  border: "none",
-                }}
-              />
-            </div>
-
-            {/* Time */}
-            <div className="mb-3">
-              <label className="text-gray-500 mb-1.5 block" style={{ fontSize: 11, fontWeight: 700 }}>時間設定</label>
-              <input
-                type="time"
-                value={formTime}
-                onChange={(e) => setFormTime(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl outline-none text-gray-700"
-                style={{
-                  background: "#F0F4F8",
-                  boxShadow: "inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  border: "none",
-                }}
-              />
-            </div>
-
-            {/* Category */}
-            <div className="mb-5">
-              <label className="text-gray-500 mb-2 block" style={{ fontSize: 11, fontWeight: 700 }}>類別選擇</label>
-              <div className="grid grid-cols-5 gap-2">
-                {(Object.keys(CATEGORY_META) as Category[]).map((cat) => {
-                  const m = CATEGORY_META[cat];
-                  const selected = formCategory === cat;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setFormCategory(cat)}
-                      className="flex flex-col items-center py-2 rounded-xl gap-1 transition-all duration-200"
-                      style={
-                        selected
-                          ? {
-                            background: m.bg,
-                            boxShadow: `0 0 10px ${m.color}44, 2px 2px 4px ${m.color}22`,
-                            border: `1.5px solid ${m.color}44`,
-                          }
-                          : {
-                            background: "#F0F4F8",
-                            boxShadow: "3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff",
-                            border: "1.5px solid transparent",
-                          }
-                      }
-                    >
-                      <span style={{ fontSize: 16 }}>{m.emoji}</span>
-                      <span style={{ fontSize: 8, fontWeight: 700, color: selected ? m.color : "#9ba8b4" }}>
-                        {m.label}
-                      </span>
-                    </button>
-                  );
-                })}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-slate-500 font-black text-[11px] uppercase tracking-wider ml-1">任務名稱</label>
+                <input
+                  type="text"
+                  placeholder="例如：服用早晨藥物"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-100/50 border border-slate-200/50 text-slate-700 font-bold outline-none focus:bg-white focus:border-blue-400 focus:shadow-xl focus:shadow-blue-500/5 transition-all"
+                />
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <button
-              onClick={handleAddTask}
-              disabled={!formTitle.trim()}
-              className="w-full py-3.5 rounded-2xl text-white transition-all duration-300 shimmer-container relative"
-              style={
-                formTitle.trim()
-                  ? {
-                    background: "linear-gradient(135deg, rgba(79, 172, 254, 0.95), rgba(0, 242, 254, 0.95))",
-                    boxShadow: "4px 4px 12px rgba(79,172,254,0.4), inset 0 0 0 1px rgba(255,255,255,0.2)",
-                    fontSize: 15,
-                    fontWeight: 800,
-                  }
-                  : {
-                    background: "rgba(209, 217, 230, 0.5)",
-                    boxShadow: "inset 2px 2px 4px #b8c1ce",
-                    fontSize: 15,
-                    fontWeight: 800,
-                    color: "#9ba8b4",
-                    cursor: "not-allowed",
-                  }
-              }
-            >
-              {formTitle.trim() && (
-                <div className="shimmer-effect" />
-              )}
-              <span className="relative z-10">＋ 新增照護任務</span>
-            </button>
-          </div>
+              <div className="space-y-2">
+                <label className="text-slate-500 font-black text-[11px] uppercase tracking-wider ml-1">備註說明</label>
+                <input
+                  type="text"
+                  placeholder="備註資訊 (選填)..."
+                  value={formNote}
+                  onChange={(e) => setFormNote(e.target.value)}
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-100/50 border border-slate-200/50 text-slate-700 font-bold outline-none focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-2">
+                  <label className="text-slate-500 font-black text-[11px] uppercase tracking-wider ml-1">執行時間</label>
+                  <input
+                    type="time"
+                    value={formTime}
+                    onChange={(e) => setFormTime(e.target.value)}
+                    className="w-full px-5 py-4 rounded-2xl bg-slate-100/50 border border-slate-200/50 text-slate-700 font-black outline-none focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-slate-500 font-black text-[11px] uppercase tracking-wider ml-1">類別標籤</label>
+                <div className="grid grid-cols-5 gap-3">
+                  {(Object.keys(CATEGORY_META) as Category[]).map((cat) => {
+                    const m = CATEGORY_META[cat];
+                    const selected = formCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setFormCategory(cat)}
+                        className={`flex flex-col items-center py-2.5 rounded-2xl gap-1.5 transition-all border-2 ${selected ? 'shadow-lg' : 'border-transparent bg-slate-100/50'}`}
+                        style={{
+                          borderColor: selected ? m.color : "transparent",
+                          background: selected ? `${m.color}10` : "",
+                          boxShadow: selected ? `0 8px 15px -5px ${m.color}30` : ""
+                        }}
+                      >
+                        <span className="text-xl">{m.emoji}</span>
+                        <span className="text-[8px] font-black" style={{ color: selected ? m.color : "#94a3b8" }}>{m.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddTask}
+                disabled={!formTitle.trim()}
+                className="w-full py-5 rounded-[24px] text-white font-black text-base shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed mt-4"
+                style={{
+                  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                  boxShadow: "0 15px 30px -10px rgba(59, 130, 246, 0.4)"
+                }}
+              >
+                ＋ 新增今日任務
+              </button>
+            </div>
+          </motion.div>
         </div>,
         document.body
-      )
-      }
-    </div >
+      )}
+    </div>
   );
 }
-

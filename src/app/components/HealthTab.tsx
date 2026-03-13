@@ -673,7 +673,13 @@ export function HealthTab({ isActive = true, isMobile = false }: { isActive?: bo
   }, [isToday, selectedDate, isActive]);
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-4">
+    <div
+      className="flex flex-col gap-5 p-4 pb-32 overflow-y-auto"
+      style={{
+        maxHeight: isMobile ? "calc(100vh - 80px)" : "calc(812px - 80px)",
+        background: "transparent"
+      }}
+    >
       <style>{`
         @keyframes heartbeat {
           0% { transform: scale(1); }
@@ -749,27 +755,22 @@ export function HealthTab({ isActive = true, isMobile = false }: { isActive?: bo
           scrollbar-width: none;
         }
       `}</style>
-      {/* Header */}
-      <div className="flex items-center justify-between pt-1">
+      {/* Header with Glassmorphism */}
+      <div className="flex items-center justify-between mb-1">
         <div>
-          <h2 className="text-gray-700" style={{ fontWeight: 700, fontSize: 18 }}>健康數據</h2>
-          <p className="text-xs text-gray-400" style={{ fontWeight: 500 }}>
+          <h2 className="text-2xl font-black text-gray-800 tracking-tight">健康數據</h2>
+          <p className="text-gray-500 font-bold text-xs mt-0.5 opacity-70">
             {isToday ? "今日生理指標追蹤" : `${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日 歷史數據`}
           </p>
         </div>
         <button
           onClick={() => setIsAnalysisOpen(true)}
-          className="px-4 py-2 rounded-xl transition-all active:scale-95 flex items-center shimmer-container"
-          style={{
-            background: "linear-gradient(135deg, rgba(79, 172, 254, 0.95), rgba(0, 242, 254, 0.95))",
-            boxShadow: "4px 4px 12px rgba(79,172,254,0.3), inset 0 0 0 1px rgba(255,255,255,0.3)",
-            backdropFilter: "blur(10px)",
-          }}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all bg-white/60 active:scale-90 shadow-lg shadow-blue-500/10 border border-white"
+          style={{ backdropFilter: "blur(10px)" }}
         >
-          <div className="shimmer-effect" />
-          <span className="relative z-10" style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-            💡 智慧分析
-          </span>
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-inner">
+            <Sparkles size={18} strokeWidth={2.5} />
+          </div>
         </button>
       </div>
 
@@ -787,14 +788,15 @@ export function HealthTab({ isActive = true, isMobile = false }: { isActive?: bo
         />
       )}
 
-      {/* Heart Rate Area Chart -> ECG Monitor */}
+      {/* ECG Monitor Card */}
       <motion.div
-        whileTap={{ scale: 0.96 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className="rounded-3xl p-5 glass-panel cursor-pointer"
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        className="rounded-3xl p-6 glass-panel cursor-pointer border border-white"
         style={{
-          background: "rgba(255, 255, 255, 0.4)",
-          border: "1px solid rgba(255, 255, 255, 0.5)",
+          background: "rgba(255, 255, 255, 0.55)",
+          backdropFilter: "blur(15px)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.03)"
         }}
       >
         <div className="flex items-center justify-between mb-4">

@@ -7,6 +7,7 @@ export interface Task {
     time: string;
     category: TaskCategory;
     title: string;
+    note: string;
     done: boolean;
 }
 
